@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import colors from '../assets/styles/colors';
 import { useNavigate } from 'react-router-dom';
-import html2pdf from 'html2pdf.js';
 import { API_CONFIG } from '../assets/styles/colors';
 import Modal from './Modal';
 // Remover: import { FaBell } from 'react-icons/fa';
@@ -101,26 +100,8 @@ function OrcamentosTable({
 
   // Função para baixar PDF
   async function handleDownloadPDF(orcamentoId) {
-    // Cria um iframe oculto para renderizar o layout de impressão
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.left = '-9999px';
-    iframe.style.width = '900px';
-    iframe.style.height = '1200px';
-    document.body.appendChild(iframe);
-    iframe.src = `/orcamentos/print/${orcamentoId}?pdf=1`;
-    iframe.onload = () => {
-      setTimeout(() => {
-        html2pdf().set({
-          margin: 0,
-          filename: `orcamento_${orcamentoId}.pdf`,
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(iframe.contentDocument.body).save().then(() => {
-          document.body.removeChild(iframe);
-        });
-      }, 800); // tempo para garantir renderização
-    };
+    // Abre a página de impressão em nova aba
+    window.open(`/orcamentos/print/${orcamentoId}`, '_blank');
   }
 
   async function handleSalvarLembrete() {

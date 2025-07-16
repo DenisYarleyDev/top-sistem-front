@@ -4,7 +4,6 @@ import { getOrcamentos, getItensOrcamento } from '../controllers/orcamentosContr
 import { getClients } from '../controllers/clientsController';
 import { getVendedores } from '../controllers/vendedoresController';
 import { getProdutos } from '../controllers/produtosController';
-import html2pdf from 'html2pdf.js';
 
 // Utilitários de formatação
 function formatarTelefone(telefone) {
@@ -102,12 +101,8 @@ export default function OrcamentoPrint() {
 
   // Função para baixar PDF
   function handleDownloadPDF() {
-    html2pdf().set({
-      margin: 0,
-      filename: `orcamento_${orcamento.id}.pdf`,
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(document.body).save();
+    // Usa a função de impressão do navegador
+    window.print();
   }
 
   return (

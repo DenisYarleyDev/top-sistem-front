@@ -4,7 +4,6 @@ import { getOrcamentos, getItensOrcamento } from '../controllers/orcamentosContr
 import { getClients } from '../controllers/clientsController';
 import { getVendedores } from '../controllers/vendedoresController';
 import { getProdutos } from '../controllers/produtosController';
-import html2pdf from 'html2pdf.js';
 
 function formatarTelefone(telefone) {
   if (!telefone) return '-';
@@ -64,14 +63,8 @@ export default function ReciboVendaPrint() {
 
   function handleDownloadPDF() {
     setMenuOpen(false);
-    if (reciboRef.current) {
-      html2pdf().set({
-        margin: 0,
-        filename: `recibo_venda_${orcamento?.id || ''}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(reciboRef.current).save();
-    }
+    // Função de download PDF removida - use a função de impressão do navegador
+    window.print();
   }
 
   // Extrair parâmetros da query string
