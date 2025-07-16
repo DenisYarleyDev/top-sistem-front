@@ -1,0 +1,64 @@
+import React from 'react';
+
+const footerStyle = {
+  width: '100%',
+  textAlign: 'center',
+  padding: '4px 0 2px 0',
+  background: 'rgba(255,255,255,0.92)',
+  color: '#64748b',
+  fontSize: '0.78rem',
+  position: 'fixed',
+  left: 0,
+  bottom: 0,
+  zIndex: 999,
+  boxShadow: '0 -1px 4px 0 rgba(0,0,0,0.04)',
+  letterSpacing: 0.05,
+  fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 0,
+};
+
+const nameStyle = {
+  color: '#218838',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  letterSpacing: 0.2,
+  fontFamily: 'inherit',
+  display: 'inline-block',
+  marginLeft: 2,
+  textDecoration: 'none',
+  cursor: 'pointer',
+  transition: 'color 0.2s',
+};
+
+const iconStyle = {
+  fontSize: '0.85em',
+  verticalAlign: 'middle',
+  marginRight: 3,
+  color: '#43a047',
+};
+
+export default function Footer() {
+  return (
+    <footer style={footerStyle} className="footer-watermark">
+      <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:3}}>
+        <span style={iconStyle}>©</span>
+        <span>
+          Sistema de gestão e vendas desenvolvido por{' '}
+          <a
+            href="https://instagram.com/denisftosa"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={nameStyle}
+            aria-label="Instagram de Denis Yarley"
+          >
+            Denis Yarley
+          </a>
+          , todos os direitos reservados. Versão 1.0 • 2025
+        </span>
+      </span>
+    </footer>
+  );
+} 
