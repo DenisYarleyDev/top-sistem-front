@@ -264,13 +264,13 @@ export default function OrcamentoPrint() {
       </div>
       <footer style={{
         marginTop: 40,
-        paddingTop: 16,
+        paddingTop: 8,
         borderTop: '1px solid #e5e7eb',
         color: '#888',
-        fontSize: 13,
+        fontSize: 9,
         textAlign: 'center',
-        letterSpacing: 0.2,
-        opacity: 0.85
+        letterSpacing: 0.1,
+        opacity: 0.7
       }}>
         Sistema desenvolvido por <b>Denis Yarley</b> &bull; Contato: (86) 98133-8017 / (86) 98871-4108<br/>
         E-mail: <a href="mailto:feitodenis@gmail.com" style={{ color: '#10b981', textDecoration: 'none' }}>feitodenis@gmail.com</a> &bull; Instagram: <a href="https://instagram.com/denisftosa" target="_blank" rel="noopener noreferrer" style={{ color: '#10b981', textDecoration: 'none' }}>@denisftosa</a>

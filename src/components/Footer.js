@@ -3,40 +3,41 @@ import React from 'react';
 const footerStyle = {
   width: '100%',
   textAlign: 'center',
-  padding: '4px 0 2px 0',
+  padding: '0.7px 0 0.7px 0',
   background: 'rgba(255,255,255,0.92)',
   color: '#64748b',
-  fontSize: '0.78rem',
+  fontSize: '0.59rem',
   position: 'fixed',
   left: 0,
   bottom: 0,
   zIndex: 999,
   boxShadow: '0 -1px 4px 0 rgba(0,0,0,0.04)',
-  letterSpacing: 0.05,
+  letterSpacing: 0.012,
   fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   gap: 0,
+  minHeight: 13,
 };
 
 const nameStyle = {
   color: '#218838',
   fontWeight: 600,
-  fontSize: '0.85rem',
-  letterSpacing: 0.2,
+  fontSize: '0.63rem',
+  letterSpacing: 0.05,
   fontFamily: 'inherit',
   display: 'inline-block',
-  marginLeft: 2,
+  marginLeft: 1,
   textDecoration: 'none',
   cursor: 'pointer',
   transition: 'color 0.2s',
 };
 
 const iconStyle = {
-  fontSize: '0.85em',
+  fontSize: '0.63em',
   verticalAlign: 'middle',
-  marginRight: 3,
+  marginRight: 1,
   color: '#43a047',
 };
 
