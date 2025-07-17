@@ -42,6 +42,8 @@ function OrcamentosTable({
   const [lembretesOrcamento, setLembretesOrcamento] = useState({}); // { [orcamentoId]: [lembretes] }
   const [loadingLembretes, setLoadingLembretes] = useState(false);
   const [editandoLembrete, setEditandoLembrete] = useState(null); // { id, observacao, dataAlert }
+  const [modalMsg, setModalMsg] = useState({ open: false, title: '', message: '', type: 'info', onConfirm: null });
+  const [modalConfirm, setModalConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     async function fetchVendas() {
@@ -106,7 +108,7 @@ function OrcamentosTable({
 
   async function handleSalvarLembrete() {
     if (!lembreteObs || !lembreteData) {
-      alert('Preencha a observação e a data do lembrete!');
+      setModalMsg({ open: true, title: 'Atenção', message: 'Preencha a observação e a data do lembrete!', type: 'warning', onConfirm: null });
       return;
     }
     try {
@@ -117,7 +119,7 @@ function OrcamentosTable({
         res = await createAlertaOrcamento(modalLembrete.orcamentoId, { note: lembreteObs, dataAlert: lembreteData });
       }
       if (res.success) {
-        alert('Lembrete salvo com sucesso!');
+        setModalMsg({ open: true, title: 'Sucesso', message: 'Lembrete salvo com sucesso!', type: 'success', onConfirm: null });
         setModalLembrete({ aberto: false, orcamentoId: null });
         setEditandoLembrete(null);
         setLembreteObs('');
@@ -126,27 +128,33 @@ function OrcamentosTable({
         const r = await getAlertasPorOrcamento(modalLembrete.orcamentoId);
         setLembretesOrcamento(prev => ({ ...prev, [modalLembrete.orcamentoId]: r.success ? r.data : [] }));
       } else {
-        alert('Erro ao salvar lembrete: ' + res.message);
+        setModalMsg({ open: true, title: 'Erro', message: 'Erro ao salvar lembrete: ' + res.message, type: 'error', onConfirm: null });
       }
     } catch (e) {
-      alert('Erro ao salvar lembrete: ' + e.message);
+      setModalMsg({ open: true, title: 'Erro', message: 'Erro ao salvar lembrete: ' + e.message, type: 'error', onConfirm: null });
     }
   }
 
   async function handleExcluirLembrete(orcamentoId, lembreteId) {
-    if (!window.confirm('Deseja excluir este lembrete?')) return;
-    try {
-      const res = await deleteAlerta(lembreteId);
-      if (res.success) {
-        // Atualizar lista
-        const r = await getAlertasPorOrcamento(orcamentoId);
-        setLembretesOrcamento(prev => ({ ...prev, [orcamentoId]: r.success ? r.data : [] }));
-      } else {
-        alert('Erro ao excluir lembrete: ' + res.message);
+    setModalConfirm({
+      open: true,
+      title: 'Confirmar Exclusão',
+      message: 'Deseja excluir este lembrete?',
+      onConfirm: async () => {
+        try {
+          const res = await deleteAlerta(lembreteId);
+          if (res.success) {
+            // Atualizar lista
+            const r = await getAlertasPorOrcamento(orcamentoId);
+            setLembretesOrcamento(prev => ({ ...prev, [orcamentoId]: r.success ? r.data : [] }));
+          } else {
+            setModalMsg({ open: true, title: 'Erro', message: 'Erro ao excluir lembrete: ' + res.message, type: 'error', onConfirm: null });
+          }
+        } catch (e) {
+          setModalMsg({ open: true, title: 'Erro', message: 'Erro ao excluir lembrete: ' + e.message, type: 'error', onConfirm: null });
+        }
       }
-    } catch (e) {
-      alert('Erro ao excluir lembrete: ' + e.message);
-    }
+    });
   }
 
   function abrirEditarLembrete(orcamentoId, lembrete) {
@@ -216,26 +224,30 @@ function OrcamentosTable({
                       return (
                         <button
                           style={{ marginRight: 8, color: colors.primary, background: 'none', border: '1px solid #10b981', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontWeight: 500 }}
-                          onClick={async () => {
-                            if (!window.confirm('Deseja realmente faturar este orçamento?')) return;
-                            try {
-                              const res = await fetch(`${API_CONFIG.BASE_URL}/api/vendas`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ orcamento_id: orc.id })
-                              });
-                              if (!res.ok) {
-                                let errMsg = res.statusText;
-                                try { const err = await res.json(); errMsg = err.error || errMsg; } catch {}
-                                alert('Erro ao faturar: ' + errMsg);
-                                return;
+                          onClick={() => setModalConfirm({
+                            open: true,
+                            title: 'Confirmar Faturamento',
+                            message: 'Deseja realmente faturar este orçamento?',
+                            onConfirm: async () => {
+                              try {
+                                const res = await fetch(`${API_CONFIG.BASE_URL}/api/vendas`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ orcamento_id: orc.id })
+                                });
+                                if (!res.ok) {
+                                  let errMsg = res.statusText;
+                                  try { const err = await res.json(); errMsg = err.error || errMsg; } catch {}
+                                  setModalMsg({ open: true, title: 'Erro', message: 'Erro ao faturar: ' + errMsg, type: 'error', onConfirm: null });
+                                  return;
+                                }
+                                setModalMsg({ open: true, title: 'Sucesso', message: 'Orçamento faturado com sucesso!', type: 'success', onConfirm: null });
+                                window.location.reload();
+                              } catch (e) {
+                                setModalMsg({ open: true, title: 'Erro', message: 'Erro ao faturar: ' + e.message, type: 'error', onConfirm: null });
                               }
-                              alert('Orçamento faturado com sucesso!');
-                              window.location.reload();
-                            } catch (e) {
-                              alert('Erro ao faturar: ' + e.message);
                             }
-                          }}
+                          })}
                         >
                           Faturar
                         </button>
@@ -249,7 +261,7 @@ function OrcamentosTable({
                       if (getVendaStatus(orc.id) === 'faturada') {
                         abrirModalRecibo(orc.id);
                       } else {
-                        alert('Para gerar recibo de venda, a venda precisa estar faturada.');
+                        setModalMsg({ open: true, title: 'Atenção', message: 'Para gerar recibo de venda, a venda precisa estar faturada.', type: 'warning', onConfirm: null });
                       }
                     }}
                     disabled={getVendaStatus(orc.id) !== 'faturada'}
@@ -348,6 +360,26 @@ function OrcamentosTable({
         cancelText="Cancelar"
         showCancel={true}
         onConfirm={handleSalvarLembrete}
+      />
+      <Modal
+        isOpen={modalMsg.open}
+        onClose={() => setModalMsg({ ...modalMsg, open: false })}
+        title={modalMsg.title}
+        message={modalMsg.message}
+        type={modalMsg.type}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalMsg.onConfirm}
+      />
+      <Modal
+        isOpen={modalConfirm.open}
+        onClose={() => setModalConfirm({ ...modalConfirm, open: false })}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        type="warning"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={modalConfirm.onConfirm}
       />
     </div>
   );

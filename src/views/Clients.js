@@ -335,7 +335,7 @@ function Clients() {
                     color: 'var(--text)',
                     fontSize: '0.875rem'
                   }}>
-                    CPF/CNPJ *
+                    CPF/CNPJ
                   </label>
                   <input
                     type="text"
@@ -356,7 +356,6 @@ function Clients() {
                       fontSize: '0.875rem',
                       background: cpfCnpjError ? '#fff6f6' : undefined
                     }}
-                    required
                   />
                   {cpfCnpjError && (
                     <div style={{ color: 'var(--error)', fontSize: '0.8rem', marginTop: 2 }}>{cpfCnpjError}</div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import colors from '../assets/styles/colors';
 import { API_CONFIG } from '../assets/styles/colors';
+import Modal from '../components/Modal';
 
 const ABAS = [
   { label: 'Faturada', status: 'faturada' },
@@ -11,6 +12,8 @@ function Sales() {
   const [aba, setAba] = useState(0);
   const [vendas, setVendas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [modalMsg, setModalMsg] = useState({ open: false, title: '', message: '', type: 'info', onConfirm: null });
+  const [modalConfirm, setModalConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     async function fetchVendas() {
@@ -28,34 +31,46 @@ function Sales() {
   }, [aba]);
 
   async function concluirVenda(id, orcamento_id) {
-    if (!window.confirm('Deseja marcar esta venda como concluída?')) return;
-    try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/api/vendas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orcamento_id, observacoes: '' })
-      });
-      if (!res.ok) throw new Error('Erro ao concluir venda');
-      alert('Venda concluída com sucesso!');
-      setVendas(vendas => vendas.filter(v => v.id !== id));
-    } catch (e) {
-      alert('Erro ao concluir venda: ' + e.message);
-    }
+    setModalConfirm({
+      open: true,
+      title: 'Confirmar Conclusão',
+      message: 'Deseja marcar esta venda como concluída?',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_CONFIG.BASE_URL}/api/vendas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orcamento_id, observacoes: '' })
+          });
+          if (!res.ok) throw new Error('Erro ao concluir venda');
+          setModalMsg({ open: true, title: 'Sucesso', message: 'Venda concluída com sucesso!', type: 'success', onConfirm: null });
+          setVendas(vendas => vendas.filter(v => v.id !== id));
+        } catch (e) {
+          setModalMsg({ open: true, title: 'Erro', message: 'Erro ao concluir venda: ' + e.message, type: 'error', onConfirm: null });
+        }
+      }
+    });
   }
   async function cancelarVenda(id) {
-    if (!window.confirm('Deseja cancelar esta venda?')) return;
-    try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/api/vendas/${id}/cancelar`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ observacoes: '' })
-      });
-      if (!res.ok) throw new Error('Erro ao cancelar venda');
-      alert('Venda cancelada com sucesso!');
-      setVendas(vendas => vendas.filter(v => v.id !== id));
-    } catch (e) {
-      alert('Erro ao cancelar venda: ' + e.message);
-    }
+    setModalConfirm({
+      open: true,
+      title: 'Confirmar Cancelamento',
+      message: 'Deseja cancelar esta venda?',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_CONFIG.BASE_URL}/api/vendas/${id}/cancelar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ observacoes: '' })
+          });
+          if (!res.ok) throw new Error('Erro ao cancelar venda');
+          setModalMsg({ open: true, title: 'Sucesso', message: 'Venda cancelada com sucesso!', type: 'success', onConfirm: null });
+          setVendas(vendas => vendas.filter(v => v.id !== id));
+        } catch (e) {
+          setModalMsg({ open: true, title: 'Erro', message: 'Erro ao cancelar venda: ' + e.message, type: 'error', onConfirm: null });
+        }
+      }
+    });
   }
 
   return (
@@ -145,6 +160,26 @@ function Sales() {
           </table>
         </div>
       )}
+      <Modal
+        isOpen={modalMsg.open}
+        onClose={() => setModalMsg({ ...modalMsg, open: false })}
+        title={modalMsg.title}
+        message={modalMsg.message}
+        type={modalMsg.type}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalMsg.onConfirm}
+      />
+      <Modal
+        isOpen={modalConfirm.open}
+        onClose={() => setModalConfirm({ ...modalConfirm, open: false })}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        type="warning"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={modalConfirm.onConfirm}
+      />
     </div>
   );
 }

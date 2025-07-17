@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getAlertas, updateAlerta, deleteAlerta } from '../controllers/alertasController';
 import { getOrcamentos } from '../controllers/orcamentosController';
 import { useNavigate } from 'react-router-dom';
+import Modal from '../components/Modal';
 
 function NotificacoesPage() {
   const [lembretes, setLembretes] = useState([]);
@@ -10,6 +11,8 @@ function NotificacoesPage() {
   const [obs, setObs] = useState('');
   const [data, setData] = useState('');
   const [loading, setLoading] = useState(true);
+  const [modalMsg, setModalMsg] = useState({ open: false, title: '', message: '', type: 'info', onConfirm: null });
+  const [modalConfirm, setModalConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,21 +33,30 @@ function NotificacoesPage() {
   }
 
   async function handleSalvar() {
-    if (!obs || !data) { alert('Preencha todos os campos!'); return; }
+    if (!obs || !data) { 
+      setModalMsg({ open: true, title: 'Atenção', message: 'Preencha todos os campos!', type: 'warning', onConfirm: null });
+      return; 
+    }
     const res = await updateAlerta(editando.id, { note: obs, dataAlert: data });
     if (res.success) {
       setLembretes(lembretes.map(l => l.id === editando.id ? { ...l, note: obs, dataAlert: data } : l));
       setEditando(null); setObs(''); setData('');
     } else {
-      alert('Erro ao salvar: ' + res.message);
+      setModalMsg({ open: true, title: 'Erro', message: 'Erro ao salvar: ' + res.message, type: 'error', onConfirm: null });
     }
   }
 
   async function handleExcluir(id) {
-    if (!window.confirm('Excluir este lembrete?')) return;
-    const res = await deleteAlerta(id);
-    if (res.success) setLembretes(lembretes.filter(l => l.id !== id));
-    else alert('Erro ao excluir: ' + res.message);
+    setModalConfirm({
+      open: true,
+      title: 'Confirmar Exclusão',
+      message: 'Excluir este lembrete?',
+      onConfirm: async () => {
+        const res = await deleteAlerta(id);
+        if (res.success) setLembretes(lembretes.filter(l => l.id !== id));
+        else setModalMsg({ open: true, title: 'Erro', message: 'Erro ao excluir: ' + res.message, type: 'error', onConfirm: null });
+      }
+    });
   }
 
   return (
@@ -91,6 +103,26 @@ function NotificacoesPage() {
           </tbody>
         </table>
       )}
+      <Modal
+        isOpen={modalMsg.open}
+        onClose={() => setModalMsg({ ...modalMsg, open: false })}
+        title={modalMsg.title}
+        message={modalMsg.message}
+        type={modalMsg.type}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalMsg.onConfirm}
+      />
+      <Modal
+        isOpen={modalConfirm.open}
+        onClose={() => setModalConfirm({ ...modalConfirm, open: false })}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        type="warning"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={modalConfirm.onConfirm}
+      />
     </div>
   );
 }
