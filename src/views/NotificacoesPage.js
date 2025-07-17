@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { getAlertas, updateAlerta, deleteAlerta } from '../controllers/alertasController';
 import { getOrcamentos } from '../controllers/orcamentosController';
+import { getClients } from '../controllers/clientsController';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 
 function NotificacoesPage() {
   const [lembretes, setLembretes] = useState([]);
   const [orcamentos, setOrcamentos] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [editando, setEditando] = useState(null); // { id, observacao, dataAlert }
   const [obs, setObs] = useState('');
   const [data, setData] = useState('');
@@ -20,8 +22,10 @@ function NotificacoesPage() {
       setLoading(true);
       const resL = await getAlertas();
       const resO = await getOrcamentos();
+      const resC = await getClients();
       setLembretes(resL.success ? resL.data : []);
       setOrcamentos(resO.success ? resO.data : []);
+      setClientes(resC.success ? resC.data : []);
       setLoading(false);
     }
     fetchAll();
@@ -29,7 +33,10 @@ function NotificacoesPage() {
 
   function getClienteNome(orcamentoFK) {
     const orc = orcamentos.find(o => String(o.id) === String(orcamentoFK));
-    return orc && orc.cliente_nome ? orc.cliente_nome : (orc && orc.clienteFK ? `Cliente #${orc.clienteFK}` : '-');
+    if (!orc) return '-';
+    
+    const cliente = clientes.find(c => String(c.id) === String(orc.clienteFK));
+    return cliente ? cliente.nome : `Cliente #${orc.clienteFK}`;
   }
 
   async function handleSalvar() {
