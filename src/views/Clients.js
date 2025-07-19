@@ -99,9 +99,14 @@ function Clients() {
     return false;
   }
 
+  function capitalizeWords(str) {
+    return typeof str === 'string' ? str.replace(/\b\w/g, l => l.toUpperCase()) : str;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isCpfCnpjValido(formData.cpfoucnpj)) {
+    // Só valida CPF/CNPJ se o campo não estiver vazio
+    if (formData.cpfoucnpj && !isCpfCnpjValido(formData.cpfoucnpj)) {
       setCpfCnpjError('CPF ou CNPJ inválido');
       return;
     }
@@ -316,7 +321,7 @@ function Clients() {
                   <input
                     type="text"
                     value={formData.nome}
-                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                    onChange={e => setFormData({...formData, nome: capitalizeWords(e.target.value)})}
                     style={{ 
                       width: '100%', 
                       padding: 'var(--spacing-sm)', 
@@ -427,7 +432,7 @@ function Clients() {
                   <input
                     type="text"
                     value={formData.cidade}
-                    onChange={(e) => setFormData({...formData, cidade: e.target.value})}
+                    onChange={e => setFormData({...formData, cidade: capitalizeWords(e.target.value)})}
                     style={{ 
                       width: '100%', 
                       padding: 'var(--spacing-sm)', 
@@ -450,7 +455,7 @@ function Clients() {
                   <input
                     type="text"
                     value={formData.bairro}
-                    onChange={(e) => setFormData({...formData, bairro: e.target.value})}
+                    onChange={e => setFormData({...formData, bairro: capitalizeWords(e.target.value)})}
                     style={{ 
                       width: '100%', 
                       padding: 'var(--spacing-sm)', 
@@ -473,7 +478,7 @@ function Clients() {
                   <input
                     type="text"
                     value={formData.rua}
-                    onChange={(e) => setFormData({...formData, rua: e.target.value})}
+                    onChange={e => setFormData({...formData, rua: capitalizeWords(e.target.value)})}
                     style={{ 
                       width: '100%', 
                       padding: 'var(--spacing-sm)', 
@@ -684,7 +689,7 @@ function Clients() {
                   background: index % 2 === 0 ? 'var(--surface)' : 'var(--background)'
                 }}>
                   <td style={{ padding: 'var(--spacing-md)' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{client.nome}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{capitalizeWords(client.nome)}</div>
                   </td>
                   <td style={{ padding: 'var(--spacing-md)' }}>
                     <code style={{ 

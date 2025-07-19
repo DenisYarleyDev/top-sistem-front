@@ -40,31 +40,38 @@ function Menu() {
       zIndex: 1000,
       display: 'flex',
       flexDirection: 'column',
+      overflowY: 'scroll', // Sempre mostra barra de rolagem
     }}>
       {/* Logo/Brand */}
       <div style={{
-        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
         marginBottom: 'var(--spacing-lg)',
-        paddingBottom: 'var(--spacing-lg)',
+        paddingBottom: 10,
         borderBottom: '1px solid rgba(255,255,255,0.1)'
       }}>
-        <h2 style={{ 
-          color: 'var(--text-white)', 
-          margin: 0,
-          fontSize: '1.25rem',
-          fontWeight: 700,
-          letterSpacing: '0.5px'
-        }}>
-          Top Alumínio
-        </h2>
-        <p style={{
-          margin: 'var(--spacing-xs) 0 0 0',
-          fontSize: '0.75rem',
-          opacity: 0.8,
-          fontWeight: 400
-        }}>
-          Sistema de Gestão e Vendas
-        </p>
+        <img src="/logo-top.jpg" alt="Logo" style={{ height: 28, display: 'block' }} />
+        <div>
+          <h2 style={{ 
+            color: 'var(--text-white)', 
+            margin: 0,
+            fontSize: '1.15rem',
+            fontWeight: 700,
+            letterSpacing: '0.5px'
+          }}>
+            Top Alumínio
+          </h2>
+          <p style={{
+            margin: 'var(--spacing-xs) 0 0 0',
+            fontSize: '0.75rem',
+            opacity: 0.8,
+            fontWeight: 400
+          }}>
+            Sistema de Gestão e Vendas
+          </p>
+        </div>
       </div>
 
       {/* User Info */}

@@ -4,6 +4,10 @@ import { translateUserType, canManageUsers, canDeleteRecords } from '../utils/us
 import { getCurrentUser } from '../controllers/authController';
 import Modal from '../components/Modal';
 
+function capitalizeWords(str) {
+  return typeof str === 'string' ? str.replace(/\b\w/g, l => l.toUpperCase()) : str;
+}
+
 function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,7 +240,7 @@ function Users() {
                 <input
                   type="text"
                   value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                  onChange={e => setFormData({...formData, nome: capitalizeWords(e.target.value)})}
                   style={{ 
                     width: '100%', 
                     padding: 'var(--spacing-sm)', 
@@ -261,7 +265,7 @@ function Users() {
                 <input
                   type="text"
                   value={formData.usuario}
-                  onChange={(e) => setFormData({...formData, usuario: e.target.value})}
+                  onChange={e => setFormData({...formData, usuario: capitalizeWords(e.target.value)})}
                   style={{ 
                     width: '100%', 
                     padding: 'var(--spacing-sm)', 
@@ -430,7 +434,7 @@ function Users() {
                   background: index % 2 === 0 ? 'var(--surface)' : 'var(--background)'
                 }}>
                   <td style={{ padding: 'var(--spacing-md)' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{user.nome}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{capitalizeWords(user.nome)}</div>
                   </td>
                   <td style={{ padding: 'var(--spacing-md)' }}>
                     <code style={{ 
@@ -439,7 +443,7 @@ function Users() {
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.75rem'
                     }}>
-                      {user.usuario}
+                      {capitalizeWords(user.usuario)}
                     </code>
                   </td>
                   <td style={{ padding: 'var(--spacing-md)' }}>

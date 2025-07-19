@@ -52,6 +52,7 @@ function Login() {
           alignItems: 'center',
           animation: 'fadeIn 0.5s',
         }}>
+          <img src="/logo-top.jpg" alt="Logo" style={{ height: 48, marginBottom: 18, display: 'block' }} />
           <div style={{ marginBottom: 24, textAlign: 'center' }}>
             <div style={{
               fontWeight: 700,

@@ -14,7 +14,7 @@ import { API_CONFIG } from '../assets/styles/colors';
 function toApiPayload(obj) {
   const out = {};
   for (const k in obj) {
-    if (obj[k] !== undefined && obj[k] !== null) {
+    if (obj[k] !== undefined && obj[k] !== null && !(typeof obj[k] === 'string' && obj[k].trim() === '')) {
       if (k.endsWith('FK')) {
         out[k] = Number(obj[k]); // FK como integer
       } else {
@@ -41,7 +41,6 @@ async function salvarOrcamentoApi(orcamento, itens) {
   }
   const orcamentoSalvo = await orcamentoRes.json();
   // 2. Salvar itens
-  // Corrigir obtenção do id do orçamento salvo (compatível com objeto ou array)
   let orcamentoId = null;
   if (orcamentoSalvo && typeof orcamentoSalvo === 'object') {
     if ('id' in orcamentoSalvo) {
@@ -61,7 +60,8 @@ async function salvarOrcamentoApi(orcamento, itens) {
       largura: item.largura,
       altura: item.altura,
       area: item.area,
-      quantidade: item.quantidade
+      quantidade: item.quantidade,
+      transpasso: item.transpasso // Envia transpasso ao backend
     });
     const itemRes = await fetch(`${API_CONFIG.BASE_URL}/api/itens-orcamento`, {
       method: 'POST',
@@ -75,6 +75,10 @@ async function salvarOrcamentoApi(orcamento, itens) {
     }
   }
   return orcamentoSalvo;
+}
+
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function BudgetsPage() {
@@ -121,6 +125,9 @@ function BudgetsPage() {
   const [modalExcluir, setModalExcluir] = useState({ aberto: false, orcamentoId: null });
   // Adicionar campo status ao estado do orçamento
   const [status, setStatus] = useState('aberto');
+  const [transpasso, setTranspasso] = useState(''); // Estado para transpasso
+  const [modalMsg, setModalMsg] = useState({ open: false, title: '', message: '', type: 'info', onConfirm: null });
+  const [modalConfirm, setModalConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Carregar dados para autocomplete
   useEffect(() => {
@@ -220,32 +227,36 @@ function BudgetsPage() {
   function handleAddItem(e) {
     e.preventDefault();
     const prod = getProdutoSelecionado();
-    if (!prod) return;
+    if (!prod) {
+      setModalMsg({ open: true, title: 'Atenção', message: 'Selecione um produto válido.', type: 'warning', onConfirm: null });
+      return;
+    }
     // Validação dos campos obrigatórios
     const quantidadeAtual = Number(quantidade);
     if (!quantidadeAtual || quantidadeAtual <= 0) {
-      alert('Informe a quantidade.');
+      setModalMsg({ open: true, title: 'Atenção', message: 'Informe a quantidade.', type: 'warning', onConfirm: null });
       return;
     }
     let larguraNum = null;
     let alturaNum = null;
     let areaNum = null;
+    let transpNum = Number(transpasso) || 0;
     if (prod.medida) {
       let larguraStr = largura;
       let alturaStr = altura;
       if (typeof larguraStr === 'number') larguraStr = larguraStr.toString();
       if (typeof alturaStr === 'number') alturaStr = alturaStr.toString();
       if (!larguraStr || Number(larguraStr.replace(',', '.')) <= 0) {
-        alert('Informe a largura.');
+        setModalMsg({ open: true, title: 'Atenção', message: 'Informe a largura.', type: 'warning', onConfirm: null });
         return;
       }
       if (!alturaStr || Number(alturaStr.replace(',', '.')) <= 0) {
-        alert('Informe a altura.');
+        setModalMsg({ open: true, title: 'Atenção', message: 'Informe a altura.', type: 'warning', onConfirm: null });
         return;
       }
       larguraNum = Number(larguraStr.replace(',', '.'));
       alturaNum = Number(alturaStr.replace(',', '.'));
-      areaNum = Number((larguraNum * alturaNum).toFixed(2));
+      areaNum = Number(((larguraNum + transpNum) * alturaNum).toFixed(3));
     }
     const valorUnitario = parseFloat(prod.preco);
     let subtotalNum = 0;
@@ -255,7 +266,7 @@ function BudgetsPage() {
       subtotalNum = Number((valorUnitario * quantidadeAtual).toFixed(2));
     }
     const item = {
-      produtoFK: produto,
+      produtoFK: String(produto), // Garante sempre string
       nomeProduto: prod.nome,
       valorUnitario: valorUnitario,
       comMedida: prod.medida, // mantém o nome do campo no item para a tabela
@@ -264,26 +275,30 @@ function BudgetsPage() {
       altura: alturaNum,
       area: areaNum,
       subtotal: subtotalNum,
+      transpasso: prod.medida ? transpasso : undefined // Sempre salva localmente
     };
+    console.log('Item adicionado:', item); // Depuração
     if (editIndex !== null) {
       const novos = [...itens];
+      // Mantém o transpasso do item editado
       novos[editIndex] = item;
       setItens(novos);
       setEditIndex(null);
     } else {
       setItens([...itens, item]);
     }
-    setProduto(''); setProdutoInput(''); setQuantidade(''); setLargura(''); setAltura(''); setArea('');
+    setProduto(''); setProdutoInput(''); setQuantidade(''); setLargura(''); setAltura(''); setArea(''); setTranspasso('');
   }
 
   function handleEditItem(idx) {
     const item = itens[idx];
-    setProduto(item.produtoFK);
+    setProduto(String(item.produtoFK)); // Garante sempre string
     setProdutoInput(item.nomeProduto);
     setQuantidade(item.quantidade);
     setLargura(item.largura);
     setAltura(item.altura);
     setArea(item.area);
+    setTranspasso(item.transpasso !== undefined && item.transpasso !== null ? String(item.transpasso) : ''); // Garante preenchimento correto
     setEditIndex(idx);
   }
 
@@ -321,22 +336,29 @@ function BudgetsPage() {
 
   // Função para deletar orçamento
   async function handleDeleteOrcamento(id) {
-    if (!window.confirm('Tem certeza que deseja excluir este orçamento?')) return;
-    // Buscar e deletar todos os itens vinculados
-    const resItens = await getItensOrcamento(id);
-    if (resItens.success && Array.isArray(resItens.data)) {
-      for (const item of resItens.data) {
-        await deleteItemOrcamento(item.id);
+    setModalConfirm({
+      open: true,
+      title: 'Confirmar Exclusão',
+      message: 'Tem certeza que deseja excluir este orçamento?',
+      onConfirm: async () => {
+        // Buscar e deletar todos os itens vinculados
+        const resItens = await getItensOrcamento(id);
+        if (resItens.success && Array.isArray(resItens.data)) {
+          for (const item of resItens.data) {
+            await deleteItemOrcamento(item.id);
+          }
+        }
+        // Agora sim, deletar o orçamento
+        const res = await deleteOrcamento(id);
+        if (res.success) {
+          setOrcamentos(orcamentos.filter(o => o.id !== id));
+          setModalMsg({ open: true, title: 'Sucesso', message: 'Orçamento excluído com sucesso!', type: 'success', onConfirm: null });
+        } else {
+          setModalMsg({ open: true, title: 'Erro', message: 'Erro ao excluir orçamento: ' + res.message, type: 'error', onConfirm: null });
+        }
+        setModalConfirm({ ...modalConfirm, open: false });
       }
-    }
-    // Agora sim, deletar o orçamento
-    const res = await deleteOrcamento(id);
-    if (res.success) {
-      setOrcamentos(orcamentos.filter(o => o.id !== id));
-      alert('Orçamento excluído com sucesso!');
-    } else {
-      alert('Erro ao excluir orçamento: ' + res.message);
-    }
+    });
   }
 
   // Função para editar orçamento (apenas campos básicos)
@@ -350,9 +372,9 @@ function BudgetsPage() {
       setOrcamentos(orcamentos.map(o => o.id === editOrcamentoId ? res.data : o));
       setEditOrcamentoId(null);
       setOrcamentoEditData(null);
-      alert('Orçamento atualizado com sucesso!');
+      setModalMsg({ open: true, title: 'Sucesso', message: 'Orçamento atualizado com sucesso!', type: 'success', onConfirm: null });
     } else {
-      alert('Erro ao atualizar orçamento: ' + res.message);
+      setModalMsg({ open: true, title: 'Erro', message: 'Erro ao atualizar orçamento: ' + res.message, type: 'error', onConfirm: null });
     }
   }
   function handleCancelEditOrcamento() {
@@ -394,6 +416,14 @@ function BudgetsPage() {
         }
         // Garante valorUnitario correto
         let valorUnitario = item.valorUnitario !== undefined && item.valorUnitario !== null && item.valorUnitario !== '' ? Number(item.valorUnitario) : preco;
+        // Tenta restaurar transpasso do item local (itens) pelo id
+        let transpassoLocal = undefined;
+        if (item.id) {
+          const local = itens.find(i => i.id === item.id);
+          if (local && local.transpasso !== undefined) {
+            transpassoLocal = local.transpasso;
+          }
+        }
         return {
           id: item.id, // importante para update/delete
           produtoFK: String(item.produtoFK),
@@ -404,7 +434,10 @@ function BudgetsPage() {
           largura: item.largura !== undefined && item.largura !== null && item.largura !== '' ? Number(item.largura) : '',
           altura: item.altura !== undefined && item.altura !== null && item.altura !== '' ? Number(item.altura) : '',
           area: item.area !== undefined && item.area !== null && item.area !== '' ? Number(item.area) : '',
-          subtotal
+          subtotal,
+          transpasso: transpassoLocal !== undefined && transpassoLocal !== null
+            ? String(transpassoLocal)
+            : (item.transpasso !== undefined && item.transpasso !== null ? String(item.transpasso) : '')
         };
       }));
       setItensOriginais(res.data.map(item => ({ ...item })));
@@ -418,23 +451,23 @@ function BudgetsPage() {
   // Função para salvar orçamento (novo ou edição)
   async function handleSalvarOrcamento() {
     try {
-      if (!cliente) { alert('Selecione um cliente.'); return; }
-      if (!vendedor) { alert('Selecione um vendedor.'); return; }
-      if (itens.length === 0) { alert('Adicione pelo menos um item.'); return; }
+      if (!cliente) { setModalMsg({ open: true, title: 'Atenção', message: 'Selecione um cliente.', type: 'warning', onConfirm: null }); return; }
+      if (!vendedor) { setModalMsg({ open: true, title: 'Atenção', message: 'Selecione um vendedor.', type: 'warning', onConfirm: null }); return; }
+      if (itens.length === 0) { setModalMsg({ open: true, title: 'Atenção', message: 'Adicione pelo menos um item.', type: 'warning', onConfirm: null }); return; }
       // Validação extra: garantir que os ids existem e são válidos
       const clienteValido = clientes.some(c => String(c.id) === String(cliente) && c.id !== '' && c.id !== null && c.id !== undefined);
       const vendedorValido = vendedores.some(v => String(v.id) === String(vendedor) && v.id !== '' && v.id !== null && v.id !== undefined);
-      if (!clienteValido) { alert('Selecione um cliente válido!'); return; }
-      if (!vendedorValido) { alert('Selecione um vendedor válido!'); return; }
+      if (!clienteValido) { setModalMsg({ open: true, title: 'Atenção', message: 'Selecione um cliente válido!', type: 'warning', onConfirm: null }); return; }
+      if (!vendedorValido) { setModalMsg({ open: true, title: 'Atenção', message: 'Selecione um vendedor válido!', type: 'warning', onConfirm: null }); return; }
       for (const item of itens) {
         const produtoValido = produtos.some(p => String(p.id) === String(item.produtoFK) && p.id !== '' && p.id !== null && p.id !== undefined);
         if (!produtoValido) {
-          alert('Produto inválido em um dos itens!');
+          setModalMsg({ open: true, title: 'Atenção', message: 'Produto inválido em um dos itens!', type: 'warning', onConfirm: null });
           return;
         }
       }
       const orcamentoPayload = {
-        clienteFK: cliente,
+        clienteFK: cliente, // Corrigido: agora envia o cliente
         vendedorFK: vendedor,
         totalOrcamento: calcularTotalOrcamento(),
         parcelas,
@@ -454,7 +487,8 @@ function BudgetsPage() {
               largura: item.largura,
               altura: item.altura,
               area: item.area,
-              quantidade: item.quantidade
+              quantidade: item.quantidade,
+              transpasso: item.transpasso // Envia transpasso ao backend
             }));
           }
         }
@@ -470,7 +504,8 @@ function BudgetsPage() {
                 largura: item.largura,
                 altura: item.altura,
                 area: item.area,
-                quantidade: item.quantidade
+                quantidade: item.quantidade,
+                transpasso: item.transpasso // Envia transpasso ao backend
               }))
             });
           }
@@ -481,11 +516,11 @@ function BudgetsPage() {
             await deleteItemOrcamento(itemOrig.id);
           }
         }
-        alert('Orçamento atualizado com sucesso!');
+        setModalMsg({ open: true, title: 'Sucesso', message: 'Orçamento atualizado com sucesso!', type: 'success', onConfirm: null });
       } else {
         // Novo orçamento
         await salvarOrcamentoApi(orcamentoPayload, itens);
-        alert('Orçamento salvo com sucesso!');
+        setModalMsg({ open: true, title: 'Sucesso', message: 'Orçamento salvo com sucesso!', type: 'success', onConfirm: null });
       }
       setModalOpen(false);
       setEditandoOrcamentoId(null);
@@ -494,8 +529,8 @@ function BudgetsPage() {
       // Recarregar orçamentos
       const res = await getOrcamentos();
       if (res.success) setOrcamentos(res.data);
-    } catch (err) {
-      alert('Erro ao salvar orçamento: ' + err.message);
+    } catch (e) {
+      setModalMsg({ open: true, title: 'Erro', message: 'Erro ao salvar orçamento: ' + (e.message || e), type: 'error', onConfirm: null });
     }
   }
 
@@ -647,13 +682,33 @@ function BudgetsPage() {
         vendedor={vendedor} setVendedor={setVendedor} vendedorInput={vendedorInput} setVendedorInput={setVendedorInput} vendedores={vendedores} vendedorInputFocused={vendedorInputFocused} setVendedorInputFocused={setVendedorInputFocused}
         parcelas={parcelas} setParcelas={setParcelas} desconto={desconto} setDesconto={setDesconto}
         itens={itens} setItens={setItens} produtos={produtos} produtoInputRef={produtoInputRef} produtoDropdownRef={produtoDropdownRef} produtoDropdownIndex={produtoDropdownIndex} setProdutoDropdownIndex={setProdutoDropdownIndex} produtoInputFocused={produtoInputFocused} setProdutoInputFocused={setProdutoInputFocused}
-        handleAddItem={handleAddItem} editIndex={editIndex}
+        handleAddItem={handleAddItem} editIndex={editIndex} setEditIndex={setEditIndex}
         handleEditItem={handleEditItem} handleRemoveItem={handleRemoveItem}
         calcularTotalOrcamento={calcularTotalOrcamento}
         toApiPayload={toApiPayload}
         handleSalvarOrcamento={handleSalvarOrcamento}
         produtoInput={produtoInput} setProdutoInput={setProdutoInput} produto={produto} setProduto={setProduto} quantidade={quantidade} setQuantidade={setQuantidade} largura={largura} setLargura={setLargura} altura={altura} setAltura={setAltura} area={area} setArea={setArea}
         status={status} setStatus={setStatus}
+      />
+      <Modal
+        isOpen={modalMsg.open}
+        onClose={() => setModalMsg({ ...modalMsg, open: false })}
+        title={modalMsg.title}
+        message={modalMsg.message}
+        type={modalMsg.type}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalMsg.onConfirm}
+      />
+      <Modal
+        isOpen={modalConfirm.open}
+        onClose={() => setModalConfirm({ ...modalConfirm, open: false })}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        type="warning"
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={modalConfirm.onConfirm}
       />
     </div>
   );

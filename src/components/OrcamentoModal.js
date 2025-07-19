@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import colors from '../assets/styles/colors';
 import ModalForm from '../components/ModalForm';
+import Modal from './Modal';
 
 function OrcamentoModal({
   isOpen,
@@ -11,7 +12,7 @@ function OrcamentoModal({
   vendedor, setVendedor, vendedorInput, setVendedorInput, vendedores, vendedorInputFocused, setVendedorInputFocused,
   parcelas, setParcelas, desconto, setDesconto,
   itens, setItens, produtos, produtoInputRef, produtoDropdownRef, produtoDropdownIndex, setProdutoDropdownIndex, produtoInputFocused, setProdutoInputFocused,
-  handleAddItem, editIndex,
+  handleAddItem, editIndex, setEditIndex,
   handleEditItem, handleRemoveItem,
   calcularTotalOrcamento,
   toApiPayload,
@@ -41,6 +42,92 @@ function OrcamentoModal({
     vendedoresFiltradosDropdown = vendedores.slice(0, 5);
   }
 
+  const [transpasso, setTranspasso] = useState('');
+  const [modalMsg, setModalMsg] = useState({ open: false, title: '', message: '', type: 'info', onConfirm: null });
+
+  function capitalizeWords(str) {
+    return str.replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  function handleAddItem() {
+    const prod = produtos.find(p => p.id.toString() === produto);
+    if (!prod) {
+      setModalMsg({ open: true, title: 'Atenção', message: 'Selecione um produto válido.', type: 'warning', onConfirm: null });
+      return;
+    }
+    const qtd = Number(quantidade) || 0;
+    if (!qtd || qtd <= 0) {
+      setModalMsg({ open: true, title: 'Atenção', message: 'Informe a quantidade.', type: 'warning', onConfirm: null });
+      return;
+    }
+    let larguraNum = Number(largura) || 0;
+    let alturaNum = Number(altura) || 0;
+    let transpNum = Number(transpasso) || 0;
+    if (prod.medida) {
+      let larguraStr = largura;
+      let alturaStr = altura;
+      if (typeof larguraStr === 'number') larguraStr = larguraStr.toString();
+      if (typeof alturaStr === 'number') alturaStr = alturaStr.toString();
+      if (!larguraStr || Number(larguraStr.replace(',', '.')) <= 0) {
+        setModalMsg({ open: true, title: 'Atenção', message: 'Informe a largura.', type: 'warning', onConfirm: null });
+        return;
+      }
+      if (!alturaStr || Number(alturaStr.replace(',', '.')) <= 0) {
+        setModalMsg({ open: true, title: 'Atenção', message: 'Informe a altura.', type: 'warning', onConfirm: null });
+        return;
+      }
+      larguraNum = Number(larguraStr.replace(',', '.'));
+      alturaNum = Number(alturaStr.replace(',', '.'));
+    }
+    let areaCalculada = '';
+    let subtotal = 0;
+    if (prod.medida) {
+      areaCalculada = ((larguraNum + transpNum) * alturaNum).toFixed(3);
+      subtotal = Number(prod.preco) * qtd * Number(areaCalculada);
+    } else {
+      areaCalculada = '';
+      subtotal = Number(prod.preco) * qtd;
+    }
+    const novoItem = {
+      produtoFK: prod.id,
+      nomeProduto: prod.nome,
+      quantidade: qtd,
+      valorUnitario: Number(prod.preco),
+      largura: prod.medida ? larguraNum : undefined,
+      altura: prod.medida ? alturaNum : undefined,
+      area: prod.medida ? Number(areaCalculada) : undefined,
+      subtotal,
+      transpasso: prod.medida ? transpasso : undefined // Salva transpasso localmente
+    };
+    console.log('Item adicionado no modal:', novoItem); // Depuração
+    if (editIndex !== null) {
+      setItens(itens.map((item, idx) => idx === editIndex ? novoItem : item));
+    } else {
+      setItens([...itens, novoItem]);
+    }
+    // Limpar campos
+    setProduto('');
+    setProdutoInput('');
+    setQuantidade('');
+    setLargura('');
+    setAltura('');
+    setArea('');
+    setTranspasso('');
+  }
+
+  function handleEditItem(idx) {
+    const item = itens[idx];
+    setProduto(item.produtoFK?.toString() || '');
+    setProdutoInput(item.nomeProduto || '');
+    setQuantidade(item.quantidade || '');
+    setLargura(item.largura || '');
+    setAltura(item.altura || '');
+    setArea(item.area || '');
+    setTranspasso(item.transpasso !== undefined && item.transpasso !== null ? String(item.transpasso) : '');
+    // Se houver controle de editIndex, setar aqui também
+    if (typeof setEditIndex === 'function') setEditIndex(idx);
+  }
+
   return (
     <ModalForm
       isOpen={isOpen}
@@ -57,7 +144,7 @@ function OrcamentoModal({
               <input
                 type="text"
                 value={clienteInput}
-                onChange={e => { setClienteInput(e.target.value); setCliente(''); }}
+                onChange={e => { setClienteInput(capitalizeWords(e.target.value)); setCliente(''); }}
                 onFocus={() => setClienteInputFocused(true)}
                 placeholder="Pesquisar cliente..."
                 style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #c3e6cb', marginTop: 4 }}
@@ -76,7 +163,7 @@ function OrcamentoModal({
               <input
                 type="text"
                 value={vendedorInput}
-                onChange={e => { setVendedorInput(e.target.value); setVendedor(''); }}
+                onChange={e => { setVendedorInput(capitalizeWords(e.target.value)); setVendedor(''); }}
                 onFocus={() => setVendedorInputFocused(true)}
                 placeholder="Pesquisar vendedor..."
                 style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #c3e6cb', marginTop: 4 }}
@@ -136,7 +223,7 @@ function OrcamentoModal({
                   ref={produtoInputRef}
                   type="text"
                   value={produtoInput}
-                  onChange={e => { setProdutoInput(e.target.value); setProduto(''); setProdutoDropdownIndex(-1); }}
+                  onChange={e => { setProdutoInput(capitalizeWords(e.target.value)); setProduto(''); setProdutoDropdownIndex(-1); }}
                   onFocus={() => { setProdutoDropdownIndex(-1); setProdutoInputFocused(true); }}
                   onKeyDown={e => {
                     if (produtosFiltrados.length > 0) {
@@ -229,6 +316,26 @@ function OrcamentoModal({
                           style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #c3e6cb', marginTop: 4 }}
                         />
                       </div>
+                      {(() => {
+                        const prod = produtos.find(p => p.id.toString() === produto);
+                        if (prod && prod.medida) {
+                          return (
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontWeight: 500 }}>Transpasso (opcional)</label>
+                              <input
+                                type="number"
+                                value={transpasso}
+                                onChange={e => setTranspasso(e.target.value)}
+                                min={0}
+                                step={0.01}
+                                placeholder="Ex: 0.05"
+                                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #c3e6cb', marginTop: 4 }}
+                              />
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                       <div style={{ flex: 1 }}>
                         <label style={{ fontWeight: 500 }}>Área</label>
                         <input
@@ -248,7 +355,13 @@ function OrcamentoModal({
                 const preco = prod ? Number(prod.preco) : 0;
                 let subtotal = 0;
                 if (prod && prod.medida) {
-                  subtotal = preco * (Number(quantidade) || 0) * (Number(area) || 0);
+                  const areaCalculada = (() => {
+                    const larg = Number(largura) || 0;
+                    const alt = Number(altura) || 0;
+                    const transp = Number(transpasso) || 0;
+                    return ((larg + transp) * alt).toFixed(3);
+                  })();
+                  subtotal = preco * (Number(quantidade) || 0) * (Number(areaCalculada) || 0);
                 } else {
                   subtotal = preco * (Number(quantidade) || 0);
                 }
@@ -308,7 +421,13 @@ function OrcamentoModal({
                       const preco = prod ? Number(prod.preco) : 0;
                       if ((subtotal === '' || subtotal === undefined || isNaN(subtotal)) && prod) {
                         if (prod.medida) {
-                          subtotal = preco * (Number(item.quantidade) || 0) * (Number(item.area) || 0);
+                          const areaCalculada = (() => {
+                            const larg = Number(item.largura) || 0;
+                            const alt = Number(item.altura) || 0;
+                            const transp = Number(item.transpasso) || 0;
+                            return ((larg + transp) * alt).toFixed(3);
+                          })();
+                          subtotal = preco * (Number(item.quantidade) || 0) * (Number(areaCalculada) || 0);
                         } else {
                           subtotal = preco * (Number(item.quantidade) || 0);
                         }
@@ -387,6 +506,16 @@ function OrcamentoModal({
       >
         {editandoOrcamentoId ? 'Salvar Alterações' : 'Salvar Orçamento'}
       </button>
+      <Modal
+        isOpen={modalMsg.open}
+        onClose={() => setModalMsg({ ...modalMsg, open: false })}
+        title={modalMsg.title}
+        message={modalMsg.message}
+        type={modalMsg.type}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalMsg.onConfirm}
+      />
     </ModalForm>
   );
 }

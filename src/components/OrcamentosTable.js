@@ -19,6 +19,10 @@ function formatarTelefone(telefone) {
   return telefone;
 }
 
+function capitalizeWords(str) {
+  return typeof str === 'string' ? str.replace(/\b\w/g, l => l.toUpperCase()) : str;
+}
+
 function OrcamentosTable({
   orcamentos,
   clientes,
@@ -190,11 +194,11 @@ function OrcamentosTable({
             return (
               <tr key={orc.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                 <td style={{ padding: 10 }}>{orc.id}</td>
-                <td style={{ padding: 10 }}>{clienteObj ? clienteObj.nome : `ID ${orc.clienteFK}`}</td>
+                <td style={{ padding: 10 }}>{clienteObj ? capitalizeWords(clienteObj.nome) : `ID ${orc.clienteFK}`}</td>
                 <td style={{ padding: 10 }}>{clienteObj && clienteObj.telefone ? formatarTelefone(clienteObj.telefone) : '-'}</td>
-                <td style={{ padding: 10 }}>{vendedorObj ? vendedorObj.nome : `ID ${orc.vendedorFK}`}</td>
+                <td style={{ padding: 10 }}>{vendedorObj ? capitalizeWords(vendedorObj.nome) : `ID ${orc.vendedorFK}`}</td>
                 <td style={{ padding: 10, textAlign: 'right' }}>{formatarReais(orc.totalOrcamento)}</td>
-                <td style={{ padding: 10 }}>{produtosLista.slice(0,3).join(', ')}</td>
+                <td style={{ padding: 10 }}>{produtosLista.slice(0,3).map(capitalizeWords).join(', ')}</td>
                 <td style={{ padding: 10 }}>{formatarDataBR(orc.data).split(' ')[0]}</td>
                 <td style={{ padding: 10, textAlign: 'center' }}>
                   <button style={{ marginRight: 8, color: colors.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }} onClick={() => onEditar(orc)}>Editar</button>

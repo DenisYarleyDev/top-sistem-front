@@ -3,6 +3,10 @@ import { getProdutos, createProduto, updateProduto, deleteProduto } from '../con
 import { getOrcamentos, getItensOrcamento } from '../controllers/orcamentosController';
 import Modal from '../components/Modal';
 
+function capitalizeWords(str) {
+  return typeof str === 'string' ? str.replace(/\b\w/g, l => l.toUpperCase()) : str;
+}
+
 function Products() {
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -243,7 +247,7 @@ function Products() {
               <input
                 type="text"
                 value={formData.nome}
-                onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                onChange={e => setFormData({ ...formData, nome: capitalizeWords(e.target.value) })}
                 required
                 style={{
                   width: '100%',
@@ -289,7 +293,7 @@ function Products() {
               <input
                 type="text"
                 value={formData.descricao}
-                onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={e => setFormData({ ...formData, descricao: capitalizeWords(e.target.value) })}
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -436,18 +440,10 @@ function Products() {
                   background: index % 2 === 0 ? 'var(--surface)' : 'var(--background)'
                 }}>
                   <td style={{ padding: 'var(--spacing-md)' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{produto.nome}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{capitalizeWords(produto.nome)}</div>
                     {produto.descricao && (
-                      <div style={{ 
-                        fontSize: '0.7rem', 
-                        color: 'var(--text-light)', 
-                        marginTop: '2px',
-                        maxWidth: '200px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {produto.descricao}
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '2px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {capitalizeWords(produto.descricao)}
                       </div>
                     )}
                   </td>

@@ -197,11 +197,14 @@ export default function ReciboVendaPrint() {
       </div>
       {/* Cabeçalho da loja */}
       <div style={{ borderBottom: '2px solid #10b981', marginBottom: 24, paddingBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: '#10b981', letterSpacing: 1 }}>{DADOS_LOJA.nome}</div>
-          <div style={{ fontSize: 15, color: '#444', marginTop: 4 }}>CNPJ: {formatarCNPJ(DADOS_LOJA.cnpj)}</div>
-          <div style={{ fontSize: 15, color: '#444' }}>{DADOS_LOJA.endereco}</div>
-          <div style={{ fontSize: 15, color: '#444' }}>Contato: {formatarTelefone(DADOS_LOJA.contato)}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <img src="/logo-top.jpg" alt="Logo" style={{ height: 60, marginRight: 18 }} />
+          <div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: '#10b981', letterSpacing: 1 }}>{DADOS_LOJA.nome}</div>
+            <div style={{ fontSize: 15, color: '#444', marginTop: 4 }}>CNPJ: {formatarCNPJ(DADOS_LOJA.cnpj)}</div>
+            <div style={{ fontSize: 15, color: '#444' }}>{DADOS_LOJA.endereco}</div>
+            <div style={{ fontSize: 15, color: '#444' }}>Contato: {formatarTelefone(DADOS_LOJA.contato)}</div>
+          </div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 18, fontWeight: 600, color: '#10b981' }}>Recibo #{orcamento.id}</div>

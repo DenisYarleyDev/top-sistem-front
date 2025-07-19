@@ -3,6 +3,10 @@ import { getVendedores, createVendedor, updateVendedor, deleteVendedor } from '.
 import { getOrcamentos, deleteOrcamento, getItensOrcamento, deleteItemOrcamento } from '../controllers/orcamentosController';
 import Modal from '../components/Modal';
 
+function capitalizeWords(str) {
+  return typeof str === 'string' ? str.replace(/\b\w/g, l => l.toUpperCase()) : str;
+}
+
 function Vendedores() {
   const [vendedores, setVendedores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,7 +240,7 @@ function Vendedores() {
                 <input
                   type="text"
                   value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                  onChange={e => setFormData({...formData, nome: capitalizeWords(e.target.value)})}
                   style={{ 
                     width: '100%', 
                     padding: 'var(--spacing-sm)', 
@@ -374,7 +378,7 @@ function Vendedores() {
                   background: index % 2 === 0 ? 'var(--surface)' : 'var(--background)'
                 }}>
                   <td style={{ padding: 'var(--spacing-md)' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{vendedor.nome}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text)' }}>{capitalizeWords(vendedor.nome)}</div>
                   </td>
                   <td style={{ padding: 'var(--spacing-md)' }}>
                     <code style={{ 
